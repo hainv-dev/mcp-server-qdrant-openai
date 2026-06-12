@@ -46,6 +46,18 @@ class EmbeddingProviderSettings(BaseSettings):
         default="sentence-transformers/all-MiniLM-L6-v2",
         validation_alias="EMBEDDING_MODEL",
     )
+    api_key: str | None = Field(
+        default=None,
+        validation_alias="EMBEDDING_API_KEY",
+    )
+    base_url: str = Field(
+        default="https://api.openai.com/v1",
+        validation_alias="EMBEDDING_BASE_URL",
+    )
+    vector_size: int = Field(
+        default=1536,
+        validation_alias="EMBEDDING_VECTOR_SIZE",
+    )
 
 
 class FilterableField(BaseModel):

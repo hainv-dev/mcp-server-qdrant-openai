@@ -47,8 +47,11 @@ Configuration is done via environment variables. The only command-line argument 
 | `QDRANT_API_KEY`         | API key for the Qdrant server                                       | None                                                              |
 | `COLLECTION_NAME`        | Name of the default collection to use.                              | None                                                              |
 | `QDRANT_LOCAL_PATH`      | Path to the local Qdrant database (alternative to `QDRANT_URL`)     | None                                                              |
-| `EMBEDDING_PROVIDER`     | Embedding provider to use (currently only "fastembed" is supported) | `fastembed`                                                       |
+| `EMBEDDING_PROVIDER`     | Embedding provider to use ("fastembed" or "openai")                | `fastembed`                                                       |
 | `EMBEDDING_MODEL`        | Name of the embedding model to use                                  | `sentence-transformers/all-MiniLM-L6-v2`                          |
+| `EMBEDDING_API_KEY`      | API key for the OpenAI-compatible embedding endpoint                | None                                                              |
+| `EMBEDDING_BASE_URL`     | Base URL of the OpenAI-compatible embedding API                     | `https://api.openai.com/v1`                                       |
+| `EMBEDDING_VECTOR_SIZE`  | Vector size produced by the OpenAI-compatible embedding model       | `1536`                                                            |
 | `TOOL_STORE_DESCRIPTION` | Custom description for the store tool                               | See default in [`settings.py`](src/mcp_server_qdrant/settings.py) |
 | `TOOL_FIND_DESCRIPTION`  | Custom description for the find tool                                | See default in [`settings.py`](src/mcp_server_qdrant/settings.py) |
 | `QDRANT_SEARCH_LIMIT`    | Maximum number of results to return from search                     | `10`                                                              |
@@ -182,7 +185,46 @@ For local Qdrant mode:
 This MCP server will automatically create a collection with the specified name if it doesn't exist.
 
 By default, the server will use the `sentence-transformers/all-MiniLM-L6-v2` embedding model to encode memories.
-For the time being, only [FastEmbed](https://qdrant.github.io/fastembed/) models are supported.
+
+### Embedding providers
+
+Two embedding providers are supported:
+
+- `fastembed` (default): local embeddings using [FastEmbed](https://qdrant.github.io/fastembed/) models.
+- `openai`: any OpenAI-compatible `/embeddings` API (OpenAI, Azure OpenAI, Ollama, LM Studio, vLLM, etc.).
+
+Example using OpenAI:
+
+```shell
+QDRANT_URL="http://localhost:6333" \
+COLLECTION_NAME="my-collection" \
+EMBEDDING_PROVIDER="openai" \
+EMBEDDING_MODEL="text-embedding-3-small" \
+EMBEDDING_API_KEY="your-openai-api-key" \
+EMBEDDING_VECTOR_SIZE="1536" \
+uvx mcp-server-qdrant
+```
+
+Example using a local OpenAI-compatible server (e.g. Ollama):
+
+```shell
+QDRANT_URL="http://localhost:6333" \
+COLLECTION_NAME="my-collection" \
+EMBEDDING_PROVIDER="openai" \
+EMBEDDING_MODEL="nomic-embed-text" \
+EMBEDDING_BASE_URL="http://localhost:11434/v1" \
+EMBEDDING_VECTOR_SIZE="768" \
+uvx mcp-server-qdrant
+```
+
+> [!NOTE]
+> `EMBEDDING_VECTOR_SIZE` must match the dimensionality of the chosen model, as it is used when creating
+> new Qdrant collections. The server validates the actual embedding size against this value and fails
+> with a clear error on mismatch.
+
+> [!WARNING]
+> Each provider/model combination uses its own named vector in Qdrant. Switching the embedding provider
+> or model for an existing collection is not supported — use a new collection or re-embed your data.
 
 ## Support for other tools
 

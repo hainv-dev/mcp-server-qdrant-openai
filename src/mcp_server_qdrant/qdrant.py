@@ -143,7 +143,21 @@ class QdrantConnector:
         :param collection_name: The name of the collection to ensure exists.
         """
         collection_exists = await self._client.collection_exists(collection_name)
-        if not collection_exists:
+        if collection_exists:
+            collection_info = await self._client.get_collection(collection_name)
+            vector_name = self._embedding_provider.get_vector_name()
+            existing_vectors = collection_info.config.params.vectors
+            if (
+                isinstance(existing_vectors, dict)
+                and vector_name not in existing_vectors
+            ):
+                raise ValueError(
+                    f"Collection '{collection_name}' was created with a different "
+                    f"embedding provider or model (existing vectors: "
+                    f"{list(existing_vectors.keys())}, expected: '{vector_name}'). "
+                    f"Use a new collection or re-embed the existing data."
+                )
+        else:
             # Create the collection with the appropriate vector size
             vector_size = self._embedding_provider.get_vector_size()
 

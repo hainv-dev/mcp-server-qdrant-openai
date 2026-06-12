@@ -78,6 +78,28 @@ class TestEmbeddingProviderSettings:
         assert settings.provider_type == EmbeddingProviderType.FASTEMBED
         assert settings.model_name == "custom_model"
 
+    def test_openai_provider_values(self, monkeypatch):
+        """Test loading OpenAI-compatible provider configuration."""
+        monkeypatch.setenv("EMBEDDING_PROVIDER", "openai")
+        monkeypatch.setenv("EMBEDDING_MODEL", "text-embedding-3-small")
+        monkeypatch.setenv("EMBEDDING_API_KEY", "test-key")
+        monkeypatch.setenv("EMBEDDING_BASE_URL", "http://localhost:11434/v1")
+        monkeypatch.setenv("EMBEDDING_VECTOR_SIZE", "768")
+
+        settings = EmbeddingProviderSettings()
+        assert settings.provider_type == EmbeddingProviderType.OPENAI
+        assert settings.model_name == "text-embedding-3-small"
+        assert settings.api_key == "test-key"
+        assert settings.base_url == "http://localhost:11434/v1"
+        assert settings.vector_size == 768
+
+    def test_openai_provider_defaults(self):
+        """Test default values for OpenAI-compatible provider settings."""
+        settings = EmbeddingProviderSettings()
+        assert settings.api_key is None
+        assert settings.base_url == "https://api.openai.com/v1"
+        assert settings.vector_size == 1536
+
 
 class TestToolSettings:
     def test_default_values(self):
